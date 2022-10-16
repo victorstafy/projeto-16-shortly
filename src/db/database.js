@@ -1,14 +1,16 @@
 import pg from 'pg';
-
+import dotenv from 'dotenv';
+dotenv.config();
 const { Pool } = pg;
+let connection;
 
-//Errado => precisa corrigir senha nao pode aparecer no arquivo
-const connection = new Pool({
-  host: 'localhost', //.env
-  port: 5432,
-  user: 'postgres',
-  password: '12345',
-  database: 'board',
-});
+try {
+    connection = new Pool({
+      connectionString: process.env.DATABASE_URL,
+    });
+    
+} catch (error) {
+    console.log(error);
+}
 
-export { connection };
+export{connection};
