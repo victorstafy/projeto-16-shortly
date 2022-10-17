@@ -59,21 +59,20 @@ async function getUsers(req, res) {
 }
   
 async function getRanking(req, res) {
-    const _id= req.params;
 
     try {
 
-        const url_obj = await connection.query(`SELECT "url","shortUrl" FROM urls WHERE id=$1;`,[_id.id]);
-
-        if (url_obj.rowCount===0) {
-            return res.send(404);
-        }
+        const url_obj = await connection.query(
+            `SELECT users."id", users."name", 
+            COUNT(DISTINCT urls."id") AS "linkCount"
+            , COUNT(visits."id") AS "VisitCount"
+            FROM users 
+            LEFT JOIN urls ON  users.id=urls."userId"
+            LEFT JOIN visits ON  urls.id=visits."urlId"
+            GROUP BY users."id"
+            ORDER BY "VisitCount" DESC LIMIT 10 ;`);
         
-        return res.status(200).send({
-        "id": _id.id,
-        "shortUrl": url_obj.rows[0].shortUrl,
-        "url": url_obj.rows[0].url
-        });
+        return res.status(200).send(url_obj.rows);
 
     } catch (error) {
         console.log(error);
