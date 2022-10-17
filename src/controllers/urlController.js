@@ -35,18 +35,30 @@ async function postShorten(req, res) {
     }
 
     try {
+
+        const repeatedUrl=await connection.query(
+          `SELECT urls."url"
+          FROM users 
+          JOIN urls ON  users.id=urls."userId"
+          WHERE urls."url" LIKE $1 AND users."id"=$2;`,
+          [url,user_id]);
+
+        if (repeatedUrl.rowCount>0){
+          return res.status(409).send('Url repetida');
+        }
+
         const shortUrl=nanoid(8)
         const InsertUrl=await connection.query(`INSERT INTO urls ("url","shortUrl","userId","createdAt") VALUES ($1,$2,$3,$4)`,
         [url,shortUrl,user_id,dayjs().format('DD/MM/YYYY HH:mm:ss')]);
    
         return res.status(201).send({"shortUrl": shortUrl});
     } catch (error) {
+        console.log(error)
         return res.status(500).send(error.details);
     }
   }
   
   async function getUrl(req, res) {
-    
     const _id= req.params;
   
     try {
@@ -54,9 +66,8 @@ async function postShorten(req, res) {
       const url_obj = await connection.query(`SELECT "url","shortUrl" FROM urls WHERE id=$1;`,[_id.id]);
 
       if (url_obj.rowCount===0) {
-          return res.send(401);
+          return res.send(404);
       }
-      console.log(url_obj)
       
       return res.status(200).send({
         "id": _id.id,
@@ -71,27 +82,19 @@ async function postShorten(req, res) {
   }
 
   async function getShortUrl(req, res) {
-    const { email, password } = req.body;
-    const _id= req.params;
-    const isValid = signinSchema.validate({
-      email,
-      password,
-    });
-  
-    if (isValid.error) {
-        return res.status(422).send(isValid.error.details);
-    }
+    const shortUrl= req.params;
+    
     try {
+      const url_obj = await connection.query(`SELECT "url","id" FROM urls WHERE "shortUrl"=$1;`,[shortUrl.shortUrl]);
 
-        const user_token = await connection.query(`SELECT password FROM users WHERE email=$1;`,[email]);
+      if (url_obj.rowCount===0) {
+          return res.send(404);
+      }
+      console.log(url_obj.rows[0].url)
+      res.redirect(url_obj.rows[0].url);
+      const InsertVisit=await connection.query(`INSERT INTO visits ("urlId","createdAt") VALUES ($1,$2)`,
+      [url_obj.rows[0].id,dayjs().format('DD/MM/YYYY HH:mm:ss')]);
 
-        const isValidPass = bcrypt.compareSync(password, user_token.rows[0].password);
-    
-        if (!user_token || !isValidPass) {
-            return res.send(401);
-        }
-    
-        
         return res.status(200);
     } catch (error) {
       console.log(error);
@@ -100,28 +103,45 @@ async function postShorten(req, res) {
   }
 
   async function delUrl(req, res) {
-    const { email, password } = req.body;
-    const _id= req.params;
-    const isValid = signinSchema.validate({
-      email,
-      password,
-    });
-  
-    if (isValid.error) {
-        return res.status(422).send(isValid.error.details);
+    const url_id= req.params;
+    const bearer_token = req.headers.user;
+    let token;
+    let user_token_list;
+
+    if (bearer_token){
+      token=bearer_token.slice(7);
+      user_token_list = await connection.query(`SELECT password FROM users;`);
     }
+    else{
+      return res.sendStatus(401);
+    }
+
     try {
 
-        const user_token = await connection.query(`SELECT password FROM users WHERE email=$1;`,[email]);
+        const url_obj = await connection.query(`SELECT "shortUrl" FROM urls WHERE "id"=$1;`,[url_id.id]);
+        if (url_obj.rowCount===0) {
+            return res.send(404);
+        }
 
-        const isValidPass = bcrypt.compareSync(password, user_token.rows[0].password);
-    
-        if (!user_token || !isValidPass) {
+        const user_shortUrlsNumber = await connection.query(
+          `SELECT 
+            COUNT(urls."shortUrl") AS "shortUrlNumber"
+          FROM users 
+          JOIN urls ON  users.id=urls."userId"
+          WHERE users.id=$1 AND urls."shortUrl" LIKE $2;`,
+          [user_id,url_obj.rows[0].shortUrl]);
+
+        console.log(user_shortUrlsNumber.rows[0])
+
+        if (Number(user_shortUrlsNumber.rows[0].shortUrlNumber)===0) {
             return res.send(401);
         }
     
-        
-        return res.status(200);
+        const del_shortUrls = await connection.query(
+          `DELETE FROM urls WHERE id = $1;`,
+          [Number(url_id.id)]);
+
+        return res.sendStatus(204);
     } catch (error) {
       console.log(error);
       return res.send(500);
