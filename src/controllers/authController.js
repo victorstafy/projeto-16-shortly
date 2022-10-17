@@ -35,7 +35,7 @@ async function signUp(req, res) {
     try {
 
         const InsertUser=await connection.query(`INSERT INTO users (name,email,password,"createdAt") VALUES ($1,$2,$3,$4)`,
-        [name,email,generated_token,dayjs().format('DD/MM/YYYY HH:mm:ss')]);
+        [name,email,generated_token,dayjs().format('MM/DD/YYYY HH:mm:ss')]);
 
         return res.send(201);
     } catch (error) {

@@ -46,7 +46,7 @@ async function postShorten(req, res) {
 
         const shortUrl=nanoid(8)
         const InsertUrl=await connection.query(`INSERT INTO urls ("url","shortUrl","userId","createdAt") VALUES ($1,$2,$3,$4)`,
-        [url,shortUrl,user_id,dayjs().format('DD/MM/YYYY HH:mm:ss')]);
+        [url,shortUrl,user_id,dayjs().format('MM/DD/YYYY HH:mm:ss')]);
    
         return res.status(201).send({"shortUrl": shortUrl});
     } catch (error) {
@@ -89,7 +89,7 @@ async function postShorten(req, res) {
       }
       res.redirect(url_obj.rows[0].url);
       const InsertVisit=await connection.query(`INSERT INTO visits ("urlId","createdAt") VALUES ($1,$2)`,
-      [url_obj.rows[0].id,dayjs().format('DD/MM/YYYY HH:mm:ss')]);
+      [url_obj.rows[0].id,dayjs().format('MM/DD/YYYY HH:mm:ss')]);
 
         return res.status(200);
     } catch (error) {
