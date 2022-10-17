@@ -27,7 +27,6 @@ async function postShorten(req, res) {
       return res.sendStatus(401);
     }
 
-    console.log(url)
     if(!url_regex.test(url)){
         return res.status(422).send('Url invalida');
     }
@@ -88,7 +87,6 @@ async function postShorten(req, res) {
       if (url_obj.rowCount===0) {
           return res.send(404);
       }
-      console.log(url_obj.rows[0].url)
       res.redirect(url_obj.rows[0].url);
       const InsertVisit=await connection.query(`INSERT INTO visits ("urlId","createdAt") VALUES ($1,$2)`,
       [url_obj.rows[0].id,dayjs().format('DD/MM/YYYY HH:mm:ss')]);
@@ -129,13 +127,15 @@ async function postShorten(req, res) {
           WHERE users.id=$1 AND urls."shortUrl" LIKE $2;`,
           [user_id,url_obj.rows[0].shortUrl]);
 
-        console.log(user_shortUrlsNumber.rows[0])
-
         if (Number(user_shortUrlsNumber.rows[0].shortUrlNumber)===0) {
             return res.send(401);
         }
     
-        const del_shortUrls = await connection.query(
+        const del_shortUrls_visits = await connection.query(
+          `DELETE FROM visits WHERE "urlId" = $1;`,
+          [Number(url_id.id)]);
+
+        const del_shortUrls_urls = await connection.query(
           `DELETE FROM urls WHERE id = $1;`,
           [Number(url_id.id)]);
 

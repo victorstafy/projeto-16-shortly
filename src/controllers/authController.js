@@ -26,7 +26,6 @@ async function signUp(req, res) {
   
     const email_list = await connection.query(`SELECT email FROM ${TABLE} WHERE email=$1`,[email]);
 
-    console.log(email_list.rows.length!==0)
     if (email_list.rows.length!==0 ){
         return res.sendStatus(409);
     }
@@ -59,9 +58,7 @@ async function signUp(req, res) {
     try {
 
         const user_token = await connection.query(`SELECT password FROM users WHERE email=$1;`,[email]);
-        console.log(user_token)
         const isValidPass = bcrypt.compareSync(password, user_token.rows[0].password);
-        console.log(isValidPass)
 
         if (!user_token || !isValidPass) {
             return res.send(401);
