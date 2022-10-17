@@ -5,11 +5,14 @@ import { signupSchema, signinSchema } from '../schemas/authSchema.js';
 import dayjs from 'dayjs';
 
 const TABLE = 'users';
-
+let user_id_req;
+let user_id;
 
 async function signUp(req, res) {
     const { name, email, password, confirmPassword } = req.body;
   
+    // res.locals.user={ name, email, password};
+
     const isValid = signupSchema.validate({
       name,
       email,
@@ -64,6 +67,10 @@ async function signUp(req, res) {
         }
     
         const token = uuid();
+
+        user_id_req = await connection.query(`SELECT id FROM users WHERE email=$1;`,[email]);
+        user_id=user_id_req.rows[0].id;
+
         return res.status(200).send(`token:${token}`);
     } catch (error) {
       console.log(error);
@@ -71,4 +78,4 @@ async function signUp(req, res) {
     }
   }
   
-  export { signUp, signIn };
+  export { signUp, signIn, user_id };
