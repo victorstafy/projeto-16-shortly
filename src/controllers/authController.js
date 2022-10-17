@@ -59,9 +59,10 @@ async function signUp(req, res) {
     try {
 
         const user_token = await connection.query(`SELECT password FROM users WHERE email=$1;`,[email]);
-
+        console.log(user_token)
         const isValidPass = bcrypt.compareSync(password, user_token.rows[0].password);
-    
+        console.log(isValidPass)
+
         if (!user_token || !isValidPass) {
             return res.send(401);
         }
@@ -70,6 +71,8 @@ async function signUp(req, res) {
 
         user_id_req = await connection.query(`SELECT id FROM users WHERE email=$1;`,[email]);
         user_id=user_id_req.rows[0].id;
+
+        // const update_token = await connection.query(`UPDATE users SET password=$1 WHERE id=$2;`,[token,user_id]);
 
         return res.status(200).send(`token:${token}`);
     } catch (error) {

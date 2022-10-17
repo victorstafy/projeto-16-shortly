@@ -1,5 +1,3 @@
-import bcrypt from 'bcrypt';
-// import { v4 as uuid } from 'uuid';
 import { connection } from '../db/database.js';
 import {nanoid} from 'nanoid';
 import dayjs from 'dayjs';
