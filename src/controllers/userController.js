@@ -3,27 +3,25 @@ import { connection } from '../db/database.js';
 const TABLE = 'users';
 
 async function getUsers(req, res) {
-    const bearer_token = req.headers.user;
-    let token;
-    let user_token_list;
+    const token=res.locals.token;
 
-    if (bearer_token){
-      token=bearer_token.slice(7);
-      user_token_list = await connection.query(`SELECT password FROM users;`);
-    }
-    else{
-      return res.sendStatus(401);
-    }
+    // if (bearer_token){
+    //   token=bearer_token.slice(7);
+    //   user_token_list = await connection.query(`SELECT password FROM users;`);
+    // }
+    // else{
+    //   return res.sendStatus(401);
+    // }
   
-    if (!token || user_token_list.rows.length===0) {
-      return res.sendStatus(401);
-    }
+    // if (!token || user_token_list.rows.length===0) {
+    //   return res.sendStatus(401);
+    // }
 
     const current_user= await connection.query(`SELECT name, id FROM users WHERE password LIKE $1`,[token])
 
-    if (current_user.rowCount===0){
-        return res.sendStatus(404);
-    }
+    // if (current_user.rowCount===0){
+    //     return res.sendStatus(404);
+    // }
 
     try {
 
